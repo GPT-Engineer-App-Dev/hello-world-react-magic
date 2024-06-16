@@ -1,41 +1,45 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Box, Button, Container, FormControl, FormLabel, Input, Text, VStack } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Container, FormControl, FormLabel, Input, VStack, Text } from "@chakra-ui/react";
+import jwt from "jsonwebtoken";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  const onSubmit = (data) => {
+    const { username, password } = data;
 
     // Mock authentication logic
     if (username === "admin" && password === "password") {
+      const token = jwt.sign({ username }, "your-secret-key", { expiresIn: "1h" });
+      localStorage.setItem("token", token);
       navigate("/");
     } else {
-      setError("Invalid username or password");
+      setErrorMessage("Invalid username or password");
     }
   };
 
   return (
     <Container centerContent maxW="container.sm" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center">
       <Box p={8} maxWidth="400px" borderWidth={1} borderRadius={8} boxShadow="lg">
-        <VStack spacing={4} align="stretch">
-          <Text fontSize="2xl" fontWeight="bold" textAlign="center">Login</Text>
-          <form onSubmit={handleLogin}>
-            <FormControl id="username" isRequired>
-              <FormLabel>Username</FormLabel>
-              <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+        <VStack spacing={4} align="flex-start">
+          <Text fontSize="2xl" fontWeight="bold">Login</Text>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FormControl isInvalid={errors.username}>
+              <FormLabel htmlFor="username">Username</FormLabel>
+              <Input id="username" placeholder="Username" {...register("username", { required: "Username is required" })} />
+              {errors.username && <Text color="red.500">{errors.username.message}</Text>}
             </FormControl>
-            <FormControl id="password" isRequired mt={4}>
-              <FormLabel>Password</FormLabel>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <FormControl isInvalid={errors.password}>
+              <FormLabel htmlFor="password">Password</FormLabel>
+              <Input id="password" type="password" placeholder="Password" {...register("password", { required: "Password is required" })} />
+              {errors.password && <Text color="red.500">{errors.password.message}</Text>}
             </FormControl>
-            {error && <Text color="red.500" mt={2}>{error}</Text>}
-            <Button type="submit" colorScheme="blue" width="full" mt={4}>Login</Button>
+            {errorMessage && <Text color="red.500">{errorMessage}</Text>}
+            <Button mt={4} colorScheme="teal" type="submit">Login</Button>
           </form>
         </VStack>
       </Box>
